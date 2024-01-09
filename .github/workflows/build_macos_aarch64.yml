@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-x264:
-    runs-on: macos-13
+    runs-on: macos-13-xlarge
     steps:
       - name: Clone x264
         run: |
@@ -47,7 +47,7 @@ jobs:
         run: make clean
   
   build-x265:
-    runs-on: macos-13
+    runs-on: macos-13-xlarge
     steps:
       - name: Clone x265
         run: |
@@ -88,7 +88,7 @@ jobs:
         run: make clean
         
   build-opus:
-    runs-on: macos-13
+    runs-on: macos-13-xlarge
     steps:
       - name: Clone opus
         run: |
@@ -119,7 +119,7 @@ jobs:
         working-directory: ./opus
         run: |
           ./configure \
-          --host=arm \
+          --host=aarch64 \
           --prefix=${{github.workspace}}/artifacts/opus \
           --enable-static \
           --disable-shared \
@@ -139,7 +139,7 @@ jobs:
         run: make clean
 
   build-and-publish-ffmpeg:
-    runs-on: macos-13
+    runs-on: macos-13-xlarge
     needs: [build-x264,build-x265,build-opus]
     steps:
       - uses: actions/cache@v3
@@ -181,7 +181,7 @@ jobs:
           --prefix=${{github.workspace}}/artifacts/ffmpeg \
           --disable-all \
           --disable-autodetect \
-          --arch=arm \
+          --arch=aarch64 \
           --pkg-config-flags=--static \
           --enable-stripping \
           --disable-debug \
