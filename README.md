@@ -9,3 +9,6 @@ Current targets are `windows_x64` and `macos_x64`
 3. opus
 4. FFmpeg
 5. MFXDispatch (Windows only)
+
+# Require
+1. Settings --> Action --> General --> Workflow permissions, 
