@@ -119,7 +119,7 @@ jobs:
         working-directory: ./opus
         run: |
           ./configure \
-          --host=aarch64 \
+          --host=arm \
           --prefix=${{github.workspace}}/artifacts/opus \
           --enable-static \
           --disable-shared \
@@ -181,7 +181,7 @@ jobs:
           --prefix=${{github.workspace}}/artifacts/ffmpeg \
           --disable-all \
           --disable-autodetect \
-          --arch=aarch64 \
+          --arch=arm \
           --pkg-config-flags=--static \
           --enable-stripping \
           --disable-debug \
