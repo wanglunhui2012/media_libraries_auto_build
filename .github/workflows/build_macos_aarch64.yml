@@ -118,7 +118,6 @@ jobs:
         if: steps.cache-opus.outputs.cache-hit != 'true'
         working-directory: ./opus
         run: |
-          uname -a
           ./configure \
           --host=arm \
           --prefix=${{github.workspace}}/artifacts/opus \
@@ -178,6 +177,7 @@ jobs:
       - name: Configure FFmpeg
         working-directory: ./ffmpeg
         run: |
+          uname -a
           ./configure \
           --prefix=${{github.workspace}}/artifacts/ffmpeg \
           --disable-all \
