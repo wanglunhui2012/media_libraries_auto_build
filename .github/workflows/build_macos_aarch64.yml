@@ -1,4 +1,4 @@
-name: build_macos
+name: build_macos_aarch64
 
 on:
   workflow_dispatch:
