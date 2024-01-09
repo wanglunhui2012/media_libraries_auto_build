@@ -1,0 +1,238 @@
+name: build_macos
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-x264:
+    runs-on: macos-latest
+    steps:
+      - name: Clone x264
+        run: |
+          git clone -b stable --depth=1 https://code.videolan.org/videolan/x264.git
+      - name: Get Git Tag
+        working-directory: ./x264
+        run: |
+          echo "X264_GIT_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - uses: actions/cache@v3
+        id: cache-x264
+        with:
+          path: ${{ github.workspace }}/artifacts/x264
+          key: ${{ runner.os }}-x264-${{env.X264_GIT_TAG}}
+      - name: Setup NASM
+        if: steps.cache-x264.outputs.cache-hit != 'true'
+        uses: ilammy/setup-nasm@v1.4.0
+      - name: Configure x264
+        if: steps.cache-x264.outputs.cache-hit != 'true'
+        working-directory: ./x264
+        run: |
+          ./configure \
+          --prefix=${{github.workspace}}/artifacts/x264 \
+          --enable-pic \
+          --enable-static \
+          --enable-strip \
+          --disable-cli \
+          --disable-opencl
+      - name: Make
+        if: steps.cache-x264.outputs.cache-hit != 'true'
+        working-directory: ./x264
+        run: make
+      - name: Make Install
+        if: steps.cache-x264.outputs.cache-hit != 'true'
+        working-directory: ./x264
+        run: make install
+      - name: Make Clean
+        if: steps.cache-x264.outputs.cache-hit != 'true'
+        working-directory: ./x264
+        run: make clean
+  
+  build-x265:
+    runs-on: macos-latest
+    steps:
+      - name: Clone x265
+        run: |
+          git clone -b Release_3.5 https://bitbucket.org/multicoreware/x265_git.git ./x265
+      - name: Get Git Tag
+        working-directory: ./x265
+        run: |
+          echo "X265_GIT_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - uses: actions/cache@v3
+        id: cache-x265
+        with:
+          path: ${{ github.workspace }}/artifacts/x265
+          key: ${{ runner.os }}-x265-${{env.X265_GIT_TAG}}
+      - name: Setup NASM
+        if: steps.cache-x265.outputs.cache-hit != 'true'
+        uses: ilammy/setup-nasm@v1.4.0
+      - name: Configure x265
+        if: steps.cache-x265.outputs.cache-hit != 'true'
+        working-directory: ./x265
+        run: |
+          cmake \
+          ./source \
+          -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/artifacts/x265 \
+          -DENABLE_SHARED=OFF \
+          -DENABLE_CLI=OFF \
+          -DENABLE_PIC=ON
+      - name: Make
+        if: steps.cache-x265.outputs.cache-hit != 'true'
+        working-directory: ./x265
+        run: make
+      - name: Make Install
+        if: steps.cache-x265.outputs.cache-hit != 'true'
+        working-directory: ./x265
+        run: make install
+      - name: Make Clean
+        if: steps.cache-x265.outputs.cache-hit != 'true'
+        working-directory: ./x265
+        run: make clean
+        
+  build-opus:
+    runs-on: macos-latest
+    steps:
+      - name: Clone opus
+        run: |
+          git clone -b 1.1.2 --depth=1 https://github.com/xiph/opus.git
+      - name: Get Git Tag
+        working-directory: ./opus
+        run: |
+          echo "OPUS_GIT_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - uses: actions/cache@v3
+        id: cache-opus
+        with:
+          path: ${{ github.workspace }}/artifacts/opus
+          key: ${{ runner.os }}-opus-${{env.OPUS_GIT_TAG}}
+      - name: Setup autoconf automake libtool
+        if: steps.cache-opus.outputs.cache-hit != 'true'
+        run: |
+          brew install autoconf automake libtool
+      - name: Setup NASM
+        if: steps.cache-opus.outputs.cache-hit != 'true'
+        uses: ilammy/setup-nasm@v1.4.0
+      - name: Autogen opus
+        if: steps.cache-opus.outputs.cache-hit != 'true'
+        working-directory: ./opus
+        run: |
+          ./autogen.sh
+      - name: Configure opus
+        if: steps.cache-opus.outputs.cache-hit != 'true'
+        working-directory: ./opus
+        run: |
+          ./configure \
+          --host=x86_64 \
+          --prefix=${{github.workspace}}/artifacts/opus \
+          --enable-static \
+          --disable-shared \
+          --disable-doc \
+          --disable-extra-programs
+      - name: Make
+        if: steps.cache-opus.outputs.cache-hit != 'true'
+        working-directory: ./opus
+        run: make
+      - name: Make Install
+        if: steps.cache-opus.outputs.cache-hit != 'true'
+        working-directory: ./opus
+        run: make install
+      - name: Make Clean
+        if: steps.cache-opus.outputs.cache-hit != 'true'
+        working-directory: ./opus
+        run: make clean
+
+  build-and-publish-ffmpeg:
+    runs-on: macos-latest
+    needs: [build-x264,build-x265,build-opus]
+    steps:
+      - uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}/artifacts/x264
+          key: ${{ runner.os }}-x264-${{env.GIT_TAG}}
+          restore-keys: ${{ runner.os }}-x264-
+      - uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}/artifacts/x265
+          key: ${{ runner.os }}-x265-${{env.GIT_TAG}}
+          restore-keys: ${{ runner.os }}-x265-
+      - uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}/artifacts/opus
+          key: ${{ runner.os }}-opus-${{env.GIT_TAG}}
+          restore-keys: ${{ runner.os }}-opus-
+      - name: Clone FFmpeg
+        run: |
+          git clone -b release/5.1 --depth=1 https://git.ffmpeg.org/ffmpeg.git
+      - name: Get Git Tag
+        working-directory: ./ffmpeg
+        run: |
+          echo "GIT_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+      - name: Setup NASM
+        uses: ilammy/setup-nasm@v1.4.0
+      - name: Set PKGCONFIG Env
+        working-directory: ./ffmpeg
+        run: |
+          echo "PKG_CONFIG_PATH=$PKG_CONFIG_PATH:${{github.workspace}}/artifacts/x264/lib/pkgconfig:${{github.workspace}}/artifacts/x265/lib/pkgconfig:${{github.workspace}}/artifacts/opus/lib/pkgconfig" >> $GITHUB_ENV
+      - name: List artifacts
+        working-directory: ./artifacts
+        run: |
+          ls -R |awk '{print i$0}' i=`pwd`'/'
+      - name: Configure FFmpeg
+        working-directory: ./ffmpeg
+        run: |
+          ./configure \
+          --prefix=${{github.workspace}}/artifacts/ffmpeg \
+          --disable-all \
+          --disable-autodetect \
+          --arch=x86_64 \
+          --pkg-config-flags=--static \
+          --enable-stripping \
+          --disable-debug \
+          --enable-pic \
+          --enable-hardcoded-tables \
+          --enable-gpl \
+          --enable-version3 \
+          --enable-avdevice \
+          --enable-avcodec \
+          --enable-avformat \
+          --enable-swresample \
+          --disable-doc \
+          --disable-htmlpages \
+          --disable-manpages \
+          --disable-podpages \
+          --disable-txtpages \
+          --disable-network \
+          --enable-libx264 \
+          --enable-libx265 \
+          --enable-libopus \
+          --enable-videotoolbox \
+          --enable-audiotoolbox \
+          --enable-encoder=libx264 \
+          --enable-encoder=libx265 \
+          --enable-encoder=libopus \
+          --enable-decoder=h264 \
+          --enable-decoder=hevc \
+          --enable-decoder=libopus \
+          --enable-encoder=h264_videotoolbox \
+          --enable-encoder=hevc_videotoolbox \
+          --enable-hwaccel=h264_videotoolbox \
+          --enable-hwaccel=hevc_videotoolbox \
+          --enable-hwaccel=vp9_videotoolbox \
+          --enable-parser=h264 \
+          --enable-parser=hevc \
+      - name: Make
+        working-directory: ./ffmpeg
+        run: make
+      - name: Make Install
+        working-directory: ./ffmpeg
+        run: make install
+      - name: Make Clean
+        working-directory: ./ffmpeg
+        run: make clean
+      - name: Zip Assets
+        run: |
+          7z a artifacts_macos_x64.zip ${{github.workspace}}/artifacts/*
+      - name: Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "artifacts_macos_x64.zip"
+          tag: "latest"
+          allowUpdates: true
+      
