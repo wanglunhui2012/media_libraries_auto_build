@@ -118,6 +118,7 @@ jobs:
         if: steps.cache-opus.outputs.cache-hit != 'true'
         working-directory: ./opus
         run: |
+          uname -a
           ./configure \
           --host=arm \
           --prefix=${{github.workspace}}/artifacts/opus \
