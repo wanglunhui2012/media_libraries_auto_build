@@ -181,7 +181,6 @@ jobs:
           --prefix=${{github.workspace}}/artifacts/ffmpeg \
           --disable-all \
           --disable-autodetect \
-          --arch=arm \
           --pkg-config-flags=--static \
           --enable-stripping \
           --disable-debug \
