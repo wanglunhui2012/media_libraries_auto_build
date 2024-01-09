@@ -29,6 +29,8 @@ jobs:
           ./configure \
           --prefix=${{github.workspace}}/artifacts/x264 \
           --enable-pic \
+          --enable-static \
+          --enable-strip \
           --disable-cli \
           --disable-opencl
       - name: Make
@@ -117,6 +119,7 @@ jobs:
         working-directory: ./opus
         run: |
           ./configure \
+          --host=aarch64 \
           --prefix=${{github.workspace}}/artifacts/opus \
           --enable-static \
           --disable-shared \
@@ -178,6 +181,7 @@ jobs:
           --prefix=${{github.workspace}}/artifacts/ffmpeg \
           --disable-all \
           --disable-autodetect \
+          --arch=arm64 \
           --pkg-config-flags=--static \
           --enable-stripping \
           --disable-debug \
@@ -228,7 +232,7 @@ jobs:
       - name: Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "artifacts_macos_x64.zip"
+          artifacts: "artifacts_macos_aarch64.zip"
           tag: "latest"
           allowUpdates: true
       
