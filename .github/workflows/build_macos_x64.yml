@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-x264:
-    runs-on: macos-13
+    runs-on: macos-latest
     steps:
       - name: Clone x264
         run: |
@@ -45,9 +45,9 @@ jobs:
         if: steps.cache-x264.outputs.cache-hit != 'true'
         working-directory: ./x264
         run: make clean
-  
+
   build-x265:
-    runs-on: macos-13
+    runs-on: macos-latest
     steps:
       - name: Clone x265
         run: |
@@ -86,9 +86,9 @@ jobs:
         if: steps.cache-x265.outputs.cache-hit != 'true'
         working-directory: ./x265
         run: make clean
-        
+
   build-opus:
-    runs-on: macos-13
+    runs-on: macos-latest
     steps:
       - name: Clone opus
         run: |
@@ -139,7 +139,7 @@ jobs:
         run: make clean
 
   build-and-publish-ffmpeg:
-    runs-on: macos-13
+    runs-on: macos-latest
     needs: [build-x264,build-x265,build-opus]
     steps:
       - uses: actions/cache@v3
